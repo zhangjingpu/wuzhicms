@@ -15,7 +15,8 @@ class WUZHI_html {
     public $categorys;//当前模块所有栏目
     public function __construct($category = '') {
         $this->category = $category;
-        $this->siteconfigs = get_cache('siteconfigs');
+		$this->siteid = get_cookie('siteid');
+		$this->siteconfigs = get_cache('siteconfigs_'.$this->siteid);
         $this->urlclass = load_class('url','content');
     }
 
@@ -37,6 +38,7 @@ class WUZHI_html {
         $siteconfigs = $this->siteconfigs;
         $categorys = $this->categorys;
         $category = $this->category;
+        if($category['listhtml']==0) return '';
         $cid = $category['cid'];
         $seo_title = $category['seo_title'] ? $category['seo_title'] : $category['name'].'_'.$siteconfigs['sitename'];
         $seo_keywords = $category['seo_keywords'];
@@ -74,6 +76,8 @@ class WUZHI_html {
             }
         }
         $sub_categorys = sub_categorys($cid);
+        $top_categoryid = getcategoryid($cid);
+        $top_category = $categorys[$top_categoryid];
         ob_start();
         include T('content',$_template,$project_css);
         return $this->write($file);
@@ -82,6 +86,7 @@ class WUZHI_html {
         $id = $data['id'];
         $previous_page = $data['previous_page'];
         $next_page = $data['next_page'];
+        if(!isset($next_page['url'])) $next_page['url'] = '';
         unset($data['previous_page'],$data['next_page']);
         $siteconfigs = $this->siteconfigs;
         $categorys = $this->categorys;
@@ -93,7 +98,7 @@ class WUZHI_html {
         $urlrule = WWW_PATH.$urlrules[0].'|'.WWW_PATH.$urlrules[1];
         $year = date('Y',$data['addtime']);
         $variables = array('year'=>$year,'cid'=>$cid,'id'=>$data['id']);
-        $pages = pages($num, $current_page, 1, $urlrule, $variables,10);
+
         $GLOBALS['catdir'] = $this->category['catdir'];
         $GLOBALS['categorydir'] = $this->category['parentdir'];
 
@@ -112,17 +117,21 @@ class WUZHI_html {
 
         if(isset($template) && $template) {
             $_template = $template;
+
         } elseif($category['show_template']) {
             $_template = $category['show_template'];
-        } elseif(isset($model_r['template'])) {
+        } elseif(isset($model_r['template']) && $model_r['template']) {
             $_template = TPLID.':'.$model_r['template'];
         } else {
             $_template = TPLID.':show';
         }
+        
         $styles = explode(':',$_template);
         $project_css = isset($styles[0]) ? $styles[0] : 'default';
         $_template = isset($styles[1]) ? $styles[1] : 'show';
-
+        $original_addtime = $data['addtime'];
+        $top_categoryid = getcategoryid($cid);
+        $top_category = $categorys[$top_categoryid];
         $page = 1;
         //手动分页
         $CONTENT_POS = strpos($content, '_wuzhicms_page_tag_');
@@ -130,9 +139,15 @@ class WUZHI_html {
             $contents = array_filter(explode('_wuzhicms_page_tag_', $content));
             $pagetotal = count($contents);
             foreach($contents as $cons) {
-                $urls = $this->urlclass->showurl(array('id'=>$id,'cid'=>$cid,'addtime'=>$data['addtime'],'page'=>$page,'route'=>$data['route']));
+
+                $urls = $this->urlclass->showurl(array('id'=>$id,'cid'=>$cid,'addtime'=>$original_addtime,'page'=>$page,'route'=>$data['route']));
                 $file_root = $urls['root'];
-                $data['content'] = $cons;
+                $content = $cons;
+                $content_pages = pages($pagetotal, $page, 1, $urlrule, $variables,10);
+                $tmp_year = date('Y',$original_addtime);
+                $tmp_month = date('m',$original_addtime);
+                $tmp_day = date('d',$original_addtime);
+                $content_pages = pages($pagetotal,$page,1,$urlrule,array('categorydir'=>$category['parentdir'],'year'=>$tmp_year,'month'=>$tmp_month,'day'=>$tmp_day,'catdir'=>$category['catdir'],'cid'=>$cid,'id'=>$id));
                 //写入
                 ob_start();
                 include T('content',$_template,$project_css);

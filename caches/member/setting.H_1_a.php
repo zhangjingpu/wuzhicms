@@ -23,6 +23,26 @@
       'free' => '5',
       'buy' => '6',
     ),
+    6 => 
+    array (
+      'free' => '',
+      'buy' => '',
+    ),
+    7 => 
+    array (
+      'free' => '',
+      'buy' => '',
+    ),
+    8 => 
+    array (
+      'free' => '',
+      'buy' => '',
+    ),
+    9 => 
+    array (
+      'free' => '',
+      'buy' => '',
+    ),
     4 => 
     array (
       'free' => '',
@@ -70,20 +90,21 @@
 
 五指互联公司',
   'ucenter' => '0',
-  'uc_api' => 'http://bbs.wuzhicms.com/uc_server',
-  'uc_ip' => '',
+  'uc_api' => 'http://bbstest.com/uc_server',
+  'uc_ip' => '127.0.0.1',
   'uc_appid' => '2',
-  'uc_key' => '123456',
-  'uc_dbhost' => '127.0.0.1',
-  'uc_dbuser' => '123456',
-  'uc_dbpw' => '123456',
-  'uc_dbname' => 'ultrax',
-  'uc_dbtablepre' => '`ultrax`.pre_ucenter_',
+  'uc_key' => 'e063rbkHX22RAvIg',
+  'uc_dbhost' => 'localhost',
+  'uc_dbuser' => 'admin',
+  'uc_dbpw' => 'admin',
+  'uc_dbname' => 'bbstest',
+  'uc_dbtablepre' => '`bbstest`.pre_ucenter_',
+  'discuz_dbtablepre' => '',
   'uc_dbcharset' => 'gbk',
   'qq_appid' => '101164321',
   'qq_appkey' => '57fc75d43a6b5208320dec0b5986a395',
   'sina_key' => '',
   'sina_secret' => '',
-  'baidu_key' => '9h15GjfUX9pl6W6F7fiCD1DF',
-  'baidu_secret' => '0VRTw43EwH7TRxWGP8MYwAqGmSoNXPeL',
+  'weixin_key' => '',
+  'weixin_secret' => '',
 )?>

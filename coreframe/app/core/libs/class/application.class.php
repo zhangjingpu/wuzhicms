@@ -36,11 +36,26 @@ final class WUZHI_application {
 	/**
 	 * 设置路由
 	 */
+    /**
+     * 设置路由
+     */
     private function setconfig() {
-        $route_config = get_config('route_config','default');
-        $this->_m = input('m') ? input('m') : $route_config['m'];
-        $this->_f = input('f') ? input('f') : $route_config['f'];
-        $this->_v = input('v') ? strip_tags(input('v')) : $route_config['v'];
+        $sn = $_SERVER["SERVER_NAME"];
+        $route_config = get_config('route_config');
+        if(isset($route_config[$sn])) {
+            $route_config = $route_config[$sn];
+        } else {
+            $route_config = $route_config['default'];
+        }
+        $this->_m = isset($GLOBALS['m']) ? sql_replace($GLOBALS['m']) : $route_config['m'];
+        $this->_f = isset($GLOBALS['f']) ? sql_replace($GLOBALS['f']) : $route_config['f'];
+        $this->_v = isset($GLOBALS['v']) ? sql_replace($GLOBALS['v']) : $route_config['v'];
+        $this->_v = strip_tags($this->_v);
+        if(isset($route_config['_get'])) {
+            foreach($route_config['_get'] as $key=>$value) {
+                $_GET[$key] = $value;
+            }
+        }
     }
 
 	/**
@@ -104,7 +119,11 @@ final class WUZHI_application {
         $GLOBALS['_CLASS_NAME_'] = '';
         if ($name === FALSE) {
             $full_dir = '';
-            if(OPEN_DEBUG) $full_dir = COREFRAME_ROOT.'app/'.$app.$_admin_dir.'/';
+            if(OPEN_DEBUG) {
+                $full_dir = COREFRAME_ROOT.'app/'.$app.$_admin_dir.'/';
+            } else {
+                $full_dir = '/coreframe/app/'.$app.$_admin_dir.'/';
+            }
             $filename = strip_tags($filename);
             echo 'Unable to locate the specified filename: '.$full_dir.$filename.'.php';
             exit();

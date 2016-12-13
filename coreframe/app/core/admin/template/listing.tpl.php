@@ -38,7 +38,7 @@
                     <i class="icon-users"></i>
                 </div>
                 <div class="value">
-                    <a href="#"><h1 id="count1">0</h1></a>
+                    <a href="?m=member&f=index&v=listing<?php echo $this->su();?>&_menuid=30"><h1 id="count1">0</h1></a>
                     <p>用户总量</p>
                 </div>
             </section>
@@ -49,7 +49,7 @@
                     <i class="icon-user-add"></i>
                 </div>
                 <div class="value">
-                    <a href="#"><h1 id="count2">0</h1></a>
+                    <a href="?m=member&f=index&v=listing<?php echo $this->su();?>&_menuid=30&search=&keyType=username&&regTimeStart=<?php echo date('Y-m-d',SYS_TIME);?>&regTimeEnd="><h1 id="count2">0</h1></a>
                     <p>今日注册用户</p>
                 </div>
             </section>
@@ -60,7 +60,7 @@
                     <i class="icon-file-word-o"></i>
                 </div>
                 <div class="value">
-                    <a href="#"><h1 id="count3">0</h1></a>
+                    <a href="?m=content&f=content&v=manage<?php echo $this->su();?>&_menuid=26"><h1 id="count3">0</h1></a>
                     <p>文章总数</p>
                 </div>
             </section>
@@ -71,7 +71,7 @@
                     <i class="icon-check-circle"></i>
                 </div>
                 <div class="value">
-                    <a href="#"><h1 id="count4">0</h1></a>
+                    <a href="?m=content&f=content&v=allcheck&status=10<?php echo $this->su();?>&_menuid=26"><h1 id="count4">0</h1></a>
                     <p>待审文章总数</p>
                 </div>
             </section>
@@ -96,30 +96,139 @@
                         <?php
                         $categorys = get_cache('category','content');
                         if(!empty($categorys)) {
-                        $lastlist = get_cache('lastlist','content');
-                        $nums = 1;
-                        foreach($lastlist as $n=>$r) {
-                            if($nums>10) break;
-                            if(!isset($categorys[$r['cid']])) continue;
-                            $nums++;
-                            ?>
-                            <tr>
-                                <td><?php echo $categorys[$r['cid']]['name'];?></td>
-                                <td><?php echo "<a href='".$r['url']."' target='_blank'>".strcut($r['title'],40,'..')."</a>";?></td>
-                                <td class="col-md-4">
-                                    <?php echo time_format($r['addtime']);?>
-                                </td>
-                            </tr>
-                        <?php }}?>
+                            $lastlist = get_cache('lastlist', 'content');
+                            $nums = 1;
+                            if (is_array($lastlist)) {
+                            foreach ($lastlist as $n => $r) {
+                                if ($nums > 10) break;
+                                if (!isset($categorys[$r['cid']])) continue;
+                                $nums++;
+                                ?>
+                                <tr>
+                                    <td><?php echo $categorys[$r['cid']]['name']; ?></td>
+                                    <td><?php echo "<a href='" . $r['url'] . "' target='_blank'>" . strcut($r['title'], 40, '..') . "</a>"; ?></td>
+                                    <td class="col-md-4">
+                                        <?php echo time_format($r['addtime']); ?>
+                                    </td>
+                                </tr>
+                            <?php }
+                        }
+                        }?>
                         </tbody>
                     </table>
                 </div>
             </section>
         </div>
         <!-- 表单 -->
-
-        <!-- 版权信息 -->
         <div class="col-lg-6">
+        <!--系统升级-->
+            <section class="panel">
+            <header class="panel-heading bm0">
+                <span>系统更新 </span><span class="badge" style="background-color:#FF3333"><?php if (isset($app['package'])) {?> new <?php }?></span>
+                    <span class="tools pull-right">
+                        <a class="icon-chevron-down" href="javascript:;"></a>
+                    </span>
+            </header>
+            <div class="panel-body" id="panel-bodys">
+                <table class="table table-hover system-upgrade">
+                    <tbody>
+                    <tr>
+                        <td>
+                            <strong>版本信息</strong>：当前版本 V<!--已是最新版本 V2.0.3 当前版本 V2.0.3-->
+                            <?php if (isset($app['package'])) {?>
+                                <?php echo $app['package']['fromVersion']; ?>
+                            <?php } else {?>
+                                <?php echo $app['latestVersion']; ?>
+                             <?php }?>
+                        </td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td>
+
+                            <strong>升级信息</strong>：
+                            <?php if (isset($app['package'])) {?>
+                                下一版本: V<?php echo $app['package']['toVersion']; ?> 最新版本: V<?php echo $app['latestVersion']; ?> <button class="btn btn-primary btn-sm active" role="button" data-toggle="modal" data-backdrop="static" data-target="#wuzhicms-upgrade">升级</button>
+                            <?php } else {?>
+                                已经是最新版本: V<?php echo $app['latestVersion']; ?>
+                            <?php }?>
+
+
+                            <?php if (isset($app['package'])) {?>
+                                <div class="modal fade" id="wuzhicms-upgrade" aria-hidden="true" tabindex="-1" role="dialog" aria-labelledby="wuzhicms-upgrade">
+                                    <div class="modal-dialog" role="document">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                                                <h4 class="modal-title" id="myModalLabel">系统升级</h4>
+                                            </div>
+                                            <div class="modal-body">
+                                                <table class="table">
+                                                    <thead>
+                                                    <tr>
+                                                        <th width="50%">应用名称</th>
+                                                        <th width="25%">版本</th>
+                                                        <th>备份升级文件</th>
+                                                    </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                    <tr>
+                                                        <td>wuzhicms</td>
+                                                        <td>
+                                                            <!--  <strong class="text-success">2.0.5</strong> -->
+                                                            <strong class="text-muted"> <?php echo $app['package']['fromVersion']; ?></strong> -&gt; <strong class="text-success"><?php echo $app['package']['toVersion']; ?></strong>
+                                                        </td>
+                                                        <td>是</td>
+                                                    </tr>
+                                                    </tbody>
+                                                </table>
+                                                <div style="background-color: #f5f5f5;padding: 15px 20px;">
+                                                    更新日志:</br></br>
+                                                    <?php echo nl2br($app['package']['description']);?>
+                                                </div>
+                                                <div class ="tpl-package-upgrade hidden" style="background-color: #f5f5f5;padding: 15px 20px;">
+                                                    更新模版:</br></br>
+                                                    <span></span>
+                                                    <div>以上模版您编辑过，是否覆盖更新？
+                                                        <button type="button" data-update='false' class="btn btn-sm update-tpl-btn">忽略以上模板</button>
+                                                        <button type="button" data-update='true' class="active btn btn-default btn-sm update-tpl-btn" >覆盖更新</button>
+                                                         <div class="tpl-helper">
+                                                        选择覆盖，您的文件的将会自动备份<br/>
+                                                        选择忽略，以上更新文件将无法升级
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div id="package-update-progress" class="package-update-progress hidden">
+                                                    <div class="progress progress-striped active">
+                                                        <div class="progress-bar progress-bar-success" style="width: 0%"></div>
+                                                    </div>
+                                                    <div class="text-success progress-text"></div>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-primary btn-wuzhicms-upgrade"
+                                                    data-check-environment-url="?m=appupdate&f=index&v=checkEnvironment&_su=<?php  echo _SU;?>"
+                                                    data-download-package-url="?m=appupdate&f=index&v=downloadPackage&_su=<?php  echo _SU;?>&packageId=<?php echo $app['package']['id'] ?>"
+                                                    data-proccess-template-url="?m=appupdate&f=index&v=proccessTpl&_su=<?php  echo _SU;?>&packageId=<?php echo $app['package']['id'] ?>"
+                                                    data-backup-file-url="?m=appupdate&f=index&v=backupUpgradeFile&_su=<?php  echo _SU;?>&packageId=<?php echo $app['package']['id'] ?>"
+                                                    data-begin-upgrade-url="?m=appupdate&f=index&v=beginUpgrade&_su=<?php  echo _SU;?>&packageId=<?php echo $app['package']['id'] ?>"
+                                                >开始升级</button>
+                                                <strong class="text text-danger" id="updating-hint" style="display:none;">正在升级，请不要关闭当前窗口...</strong>
+
+                                                <button id="finish-update-btn" data-loading-text="正在完成升级, 请稍等..." class="btn btn-primary" style="display:none">完成升级</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php }?>
+                        </td>
+                        <td></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        <!-- 版权信息 -->
             <section class="panel">
                 <header class="panel-heading bm0">
                     <span>团队及版权信息</span>
@@ -139,17 +248,17 @@
                             <td></td>
                         </tr>
                         <tr>
-                            <td><strong>开发团队</strong>： 屠正武、吴灵辉、汪勇 、王参加、赵宏伟、渠雁云、翟党伟、郝川 </td>
+                            <td><strong>开发团队</strong>： 王参加、赵宏伟、张峰、秦兴忠、王冲、屠正武、吴灵辉、汪勇 、渠雁云、翟党伟、郝川 </td>
                             <td></td>
                         </tr>
                         <tr>
                             <td>
-                                <strong>界面设计</strong>： <a href="http://www.pxgrids.com/" target="_blank">像素格工作室</a>
+                                <strong>界面设计</strong>： 张峰(五指CMS首席设计师)、<a href="http://www.pxgrids.com/" target="_blank">渠雁云</a>(像素格工作室)
                             </td>
                             <td></td>
                         </tr>
                         <tr>
-                            <td><strong>环境信息</strong>：<a data-toggle="modal" href="#chartsetting">【查看基本信息】</a>
+                            <td><strong>环境信息</strong>：<a data-toggle="modal" href="#chartsetting"><?php echo $_SERVER['SERVER_SOFTWARE'];?>【查看基本信息】</a>
                                 <a href="index.php?m=core&f=index&v=phpinfo<?php echo $this->su();?>" target="_blank" >【点击查看 phpinfo()】</a><br/>
                                 <div aria-hidden="true" aria-labelledby="myModalLabel" role="dialog" tabindex="-1" id="chartsetting" class="modal fade">
                                     <div class="modal-dialog">
@@ -180,11 +289,17 @@
                             </td>
                             <td></td>
                         </tr>
+                        <tr>
+                            <td>
+                                <strong>服务器IP</strong>：<?php echo $_SERVER["SERVER_ADDR"];?>
+                            </td>
+                            <td></td>
+                        </tr>
                         <?php
                         $li1 = '试用型 － <a href="http://www.wuzhicms.com/buy/" target="_blank">点击购买</a>';
                         $li3 = '<a href="http://www.wuzhicms.com/buy/" target="_blank"> 没有技术服务，点击这里购买</a>';
                         $li2 = '';
-                        $li5 = '个人用户永久免费，企业用户免费使用30天';
+                        $li5 = '';
                         ?>
                         <tr>
                             <td>
@@ -205,13 +320,6 @@
                             <td>
                                 <strong>产品服务编号</strong>：
                                 <strong><?php echo $li2;?></strong>
-                            </td>
-                            <td></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <strong>授权使用年限</strong>：
-                                <?php echo $li5;?>
                             </td>
                             <td></td>
                         </tr>
@@ -244,6 +352,9 @@
 <script src="<?php echo R;?>js/bootstrap.min.js"></script>
 <script src="<?php echo R;?>js/jquery.nicescroll.js" type="text/javascript"></script>
 <script src="<?php echo R;?>js/pxgrids-scripts.js"></script>
+<?php if (isset($app['package'])) {?>
+    <script src="<?php echo R;?>js/wuzhicms-upgrade.js"></script>
+<?php }?>
 <script type="text/javascript">
     function stat_speed(count,id)
     {

@@ -24,7 +24,7 @@ include $this->template('header','core');
 if($modelid==0) {
     ?>
     <a href="?m=content&f=content&v=listing<?php echo $this->su();?>" class="btn btn-info btn-sm">共享模型数据列表</a>
-<?php
+    <?php
 } elseif($master_table=='content_share') {
     ?>
     <a href="#" class="btn btn-info btn-sm dropdown-toggle" data-toggle="dropdown" data-hover="dropdown"><i class="icon-plus btn-icon"></i>添加内容<span class="caret"></span></a>
@@ -36,7 +36,7 @@ if($modelid==0) {
 <?php } else {
     ?>
     <a href="?m=content&f=content&v=add&modelid=<?php echo $modelid;?>&cid=<?php echo $cid.'&type='.$GLOBALS['type'].$this->su();?>" class="btn btn-info btn-sm "><i class="icon-plus btn-icon"></i>添加内容</a>
-<?php
+    <?php
 }?>
                  </span>
                  <span class="dropdown examine">
@@ -61,7 +61,7 @@ if($modelid==0) {
                 </header>
 
                 <div class="panel-body" id="panel-bodys">
-                    <form name="myform" id="myform" method="post" action="?m=content&f=content&v=sort<?php echo $this->su();?>">
+                    <form name="myform" id="myform" method="post" action="?m=content&f=content&v=sort<?php echo $this->su();?>" onsubmit="return check_myform();">
                         <table class="table table-striped table-advance table-hover">
                             <thead>
                             <tr>
@@ -81,11 +81,31 @@ if($modelid==0) {
                                     <td><input type="text" class="center" style="width: 30px;padding:3px;" name="sorts[<?php echo $r[ 'id'];?>]" value="<?php echo $r[ 'sort'];?>"></td>
                                     <td><?php echo $r[ 'id'];?></td>
                                     <?php if($modelid==0) echo ' <td>'.$categorys[$r['cid']]['name'].'</td>';?>
-                                    <td><a href="<?php if($r['status']==9) {echo $r['url'];}else{ echo '?m=content&f=content&v=view&id='.$r['id'].'&cid='.$r['cid'].$this->su();};?>" target="_blank"><?php echo p_htmlentities($r['title']);?></a><?php if($r['block']){?><img src="<?php echo R;?>images/icon/good.png" width="12" height="12"><?php } if($r['thumb']){?><img src="<?php echo R;?>images/icon/img.png" width="12" height="12"><?php }?></td>
+                                    <td><a href="<?php if ($r['status'] == 9) {
+                                            if (strpos($r['url'], '://') === false) {
+                                                echo $this->siteurl;
+                                                echo $r['url'];
+                                            } else {
+                                                echo $r['url'];
+                                            }
+
+                                        } else {
+                                            echo '?m=content&f=content&v=view&id=' . $r['id'] . '&cid=' . $r['cid'] . $this->su();
+                                        }; ?>"
+                                            target="_blank"><?php echo p_htmlentities($r['title']); ?></a><?php if ($r['block']) { ?>
+                                            <img src="<?php echo R; ?>images/icon/good.png"
+                                            width="12"
+                                            height="12"><?php }
+                                        if ($r['thumb']) { ?> <img src="<?php echo R; ?>images/icon/img.png"
+                                            width="12"
+                                            height="12"><?php } if ($r['push']) { ?> <img src="<?php echo R; ?>images/icon/push.png"
+                                            width="12"
+                                            height="12"><?php } ?></td>
                                     <td title="更新时间：<?php echo date('Y-m-d H:i:s',$r[ 'updatetime']);?>"><?php echo time_format($r[ 'addtime']);?></td>
                                     <td>
                                         <a href="?m=content&f=content&v=edit&id=<?php echo $r['id'];?>&type=<?php echo $GLOBALS['type'];?>&cid=<?php echo $r['cid'].$this->su();?>" class="btn btn-primary btn-xs">编辑</a>
-                                        <a href="?m=content&f=content&v=view&id=<?php echo $r['id'];?>&cid=<?php echo $r['cid'];?><?php echo $this->su();?>" target="_blank" class="btn btn-default btn-xs">审核</a>
+                                        <?php if($r['status']!=9) {?>
+                                        <a href="?m=content&f=content&v=view&id=<?php echo $r['id'];?>&cid=<?php echo $r['cid'];?><?php echo $this->su();?>" target="_blank" class="btn btn-default btn-xs">审核</a><?php }?>
                                         <a href="javascript:makedo('?m=content&f=content&v=<?php if($status!=0) echo 'recycle_';?>delete&id=<?php echo $r['id'];?>&cid=<?php echo $r['cid'].$this->su();?>', '确认删除该记录？')" class="btn btn-danger btn-xs">删除</a>
                                         <?php if($cid==69) {?>
                                         <a href="?m=medical&f=jingjia&v=listing&id=<?php echo $r['id'];?><?php echo $this->su();?>" class="btn btn-info btn-xs">竞价</a><?php }?>
@@ -107,8 +127,9 @@ if($modelid==0) {
 
                                         <button type="submit" onclick="$('#v').val('move')" class="btn btn-default btn-sm">移动</button>
                                         <?php if($cid) {?>
-                                        <button type="submit" onclick="$('#v').val('delete_more')" class="btn btn-default btn-sm">批量删除</button><?php }?>
+                                            <button type="submit" onclick="$('#v').val('delete_more')" class="btn btn-default btn-sm">批量删除</button><?php }?>
 
+                                        <input name="status" value="<?php echo $status;?>" type="hidden">
                                         <input name="cid" value="<?php echo $cid;?>" type="hidden">
                                     </div>
                                     <div class="pull-right">
@@ -123,6 +144,17 @@ if($modelid==0) {
             </section>
         </div>
 </section>
+<script>
+    function check_myform() {
+        if($("#v").val()=='delete_more') {
+            if(confirm('批量删除后,无法恢复-请确认?')) {
+
+            } else {
+                return false;
+            }
+        }
+    }
+</script>
 <script src="<?php echo R;?>js/bootstrap.min.js"></script>
 <script src="<?php echo R;?>js/hover-dropdown.js"></script>
 <script src="<?php echo R;?>js/jquery.nicescroll.js" type="text/javascript"></script>

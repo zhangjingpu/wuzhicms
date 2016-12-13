@@ -1,8 +1,102 @@
 <?php
  return array (
+  'category' => 
+  array (
+    'id' => '546',
+    'modelid' => '15',
+    'field' => 'category',
+    'name' => '主题类别',
+    'remark' => '',
+    'css' => '',
+    'minlength' => '0',
+    'maxlength' => '0',
+    'pattern' => '',
+    'errortips' => '',
+    'formtype' => 'box',
+    'setting' => 
+    array (
+      'options' => '咨询|咨询
+谏言|谏言
+投诉|投诉
+求助|求助
+感谢|感谢',
+      'boxtype' => 'radio',
+      'fieldtype' => 'varchar',
+      'defaultvalue' => '',
+      'outputtype' => '0',
+    ),
+    'ext_code' => '',
+    'unsetgids' => '',
+    'unsetroles' => '',
+    'master_field' => '1',
+    'ban_field' => '0',
+    'location' => '0',
+    'search_field' => '0',
+    'ban_contribute' => '1',
+    'to_fulltext' => '1',
+    'to_block' => '1',
+    'sort' => '0',
+    'disabled' => '0',
+    'powerful_field' => '0',
+    'workflow_field' => '0',
+    'master_table' => 'guestbook',
+    'attr_table' => '',
+  ),
+  'area' => 
+  array (
+    'id' => '545',
+    'modelid' => '15',
+    'field' => 'area',
+    'name' => '主题领域',
+    'remark' => '',
+    'css' => '',
+    'minlength' => '0',
+    'maxlength' => '0',
+    'pattern' => '',
+    'errortips' => '',
+    'formtype' => 'box',
+    'setting' => 
+    array (
+      'options' => '三农|三农
+环保|环保
+医疗|医疗
+就业|就业
+文娱|文娱
+感谢|感谢
+拆迁|拆迁
+城建|城建
+交通|交通
+旅游|旅游
+企业|企业
+谏言|谏言
+教育|教育
+贪腐|贪腐
+其他|其他',
+      'boxtype' => 'radio',
+      'fieldtype' => 'varchar',
+      'defaultvalue' => '',
+      'outputtype' => '0',
+    ),
+    'ext_code' => '',
+    'unsetgids' => '',
+    'unsetroles' => '',
+    'master_field' => '1',
+    'ban_field' => '0',
+    'location' => '0',
+    'search_field' => '0',
+    'ban_contribute' => '1',
+    'to_fulltext' => '1',
+    'to_block' => '1',
+    'sort' => '0',
+    'disabled' => '0',
+    'powerful_field' => '0',
+    'workflow_field' => '0',
+    'master_table' => 'guestbook',
+    'attr_table' => '',
+  ),
   'title' => 
   array (
-    'id' => '178',
+    'id' => '542',
     'modelid' => '15',
     'field' => 'title',
     'name' => '留言标题',
@@ -33,12 +127,13 @@
     'sort' => '1',
     'disabled' => '0',
     'powerful_field' => '0',
+    'workflow_field' => '0',
     'master_table' => 'guestbook',
     'attr_table' => '',
   ),
   'linkman' => 
   array (
-    'id' => '180',
+    'id' => '543',
     'modelid' => '15',
     'field' => 'linkman',
     'name' => '联系人',
@@ -69,12 +164,13 @@
     'sort' => '2',
     'disabled' => '0',
     'powerful_field' => '0',
+    'workflow_field' => '0',
     'master_table' => 'guestbook',
     'attr_table' => '',
   ),
   'tel' => 
   array (
-    'id' => '181',
+    'id' => '544',
     'modelid' => '15',
     'field' => 'tel',
     'name' => '联系电话',
@@ -105,12 +201,13 @@
     'sort' => '3',
     'disabled' => '0',
     'powerful_field' => '0',
+    'workflow_field' => '0',
     'master_table' => 'guestbook',
     'attr_table' => '',
   ),
   'content' => 
   array (
-    'id' => '176',
+    'id' => '541',
     'modelid' => '15',
     'field' => 'content',
     'name' => '留言内容',
@@ -125,8 +222,6 @@
     array (
       'toolbar' => 'textarea',
       'defaultvalue' => '',
-      'enablesaveimage' => '1',
-      'watermark_enable' => '0',
     ),
     'ext_code' => '',
     'unsetgids' => '',
@@ -141,12 +236,13 @@
     'sort' => '4',
     'disabled' => '0',
     'powerful_field' => '0',
+    'workflow_field' => '0',
     'master_table' => 'guestbook',
     'attr_table' => '',
   ),
   'addtime' => 
   array (
-    'id' => '165',
+    'id' => '540',
     'modelid' => '15',
     'field' => 'addtime',
     'name' => '添加时间',
@@ -175,6 +271,7 @@
     'sort' => '12',
     'disabled' => '0',
     'powerful_field' => '0',
+    'workflow_field' => '0',
     'master_table' => 'guestbook',
     'attr_table' => '',
   ),

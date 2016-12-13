@@ -139,6 +139,10 @@
 								<td><input type="text" name="setting[uc_dbtablepre]" id="uc_dbtablepre" value="<?php if(isset($setting['uc_dbtablepre']))echo $setting['uc_dbtablepre']?>" /> <input type="button" value="测试数据库连接" class="btn btn-info btn-sm"  onclick="check_uc()" /></td>
 							</tr>
 							<tr>
+								<td>Discuz 数据库表前缀：</td>
+								<td><input type="text" name="setting[discuz_dbtablepre]" id="discuz_dbtablepre" value="<?php if(isset($setting['discuz_dbtablepre']))echo $setting['discuz_dbtablepre']?>" /> </td>
+							</tr>
+							<tr>
 								<td>Ucenter 数据库字符集：</td>
 								<td>
 									<select name="setting[uc_dbcharset]"  id="uc_dbcharset"  />
@@ -172,6 +176,14 @@
                						<div class="col-sm-2 col-xs-2">App Secret</div><input type="text" class="col-sm-5 col-xs-5" name="setting[sina_secret]" id="sina_secret" size="30" value="<?php echo output($setting,'sina_secret');?>"/>
                					</td>
                				</tr>
+							<tr>
+								<td class="col-sm-2 col-xs-2" style="padding-right: 0px;"><a href="http://open.weixin.qq.com/" target="_blank" title="点击跳转申请">微信登录：</a></td>
+								<td style="padding-left: 0px;">
+									<div class="col-sm-2 col-xs-2">App Key</div><input type="text" class="col-sm-3 col-xs-3" name="setting[weixin_key]" id="weixin_key" size="20" value="<?php echo output($setting,'weixin_key');?>" />
+									<div class="col-sm-2 col-xs-2">App Secret</div><input type="text" class="col-sm-5 col-xs-5" name="setting[weixin_secret]" id="weixin_secret" size="30" value="<?php echo output($setting,'weixin_secret');?>"/>
+								</td>
+							</tr>
+							<!--
                				<tr>
                					<td class="col-sm-2 col-xs-2" style="padding-right: 0px;"><a href="http://developer.baidu.com/" target="_blank" title="点击跳转申请">BAIDU登录：</a></td>
                					<td style="padding-left: 0px;">
@@ -179,6 +191,7 @@
                						<div class="col-sm-2 col-xs-2">App Secret</div><input type="text" class="col-sm-5 col-xs-5" name="setting[baidu_secret]" id="baidu_secret" size="30" value="<?php echo output($setting,'baidu_secret');?>"/>
                					</td>
                				</tr>
+               				-->
 						</table>
                 	</div>
 

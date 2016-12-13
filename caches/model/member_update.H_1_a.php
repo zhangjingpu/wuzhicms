@@ -14,12 +14,14 @@ class form_update {
         $this->modelid = $modelid;
         $this->fields = get_cache('field_'.$modelid,'model');
         $this->extdata = '';
-        //TODO 初始化勾子，在程序提交前处理
+        $this->hook = load_class('hook');
     }
 	function execute($formdata) {
         if(!isset($formdata['master_data'])) return '';
         $datas = $formdata['master_data'];
         if(isset($formdata['attr_data'])) $datas = array_merge($datas,$formdata['attr_data']);
+        $this->hook->run_hook('form_update',$datas,array('modelid'=>$this->modelid));
+
         $info = array();
         $this->formdata = $datas;
         $this->id = $datas['id'];
@@ -40,10 +42,11 @@ private function baidumap($filed, $value) {
 }
 
 private function block($filed, $value) {
+    $block_api = load_class('block_api','content');
+    $_lang = isset($GLOBALS['_lang']) ? $GLOBALS['_lang'] : 'zh';
     if($value=='1') {
         $posids = array();
         $value = $GLOBALS['form']['block'];
-        $block_api = load_class('block_api','content');
         foreach($value as $r) {
             if(is_numeric($r)) $posids[] = $r;
         }
@@ -53,7 +56,10 @@ private function block($filed, $value) {
                 $textcontent[$_key] = $this->formdata[$_key];
             }
         }
-        $block_api->update($this->id.'-'.$this->cid, $posids, $textcontent,$this->cid);
+
+        $block_api->update($this->id.'-'.$this->cid.'-'.$_lang, $posids, $textcontent,$this->cid);
+    } else {
+        $block_api->delete($this->id.'-'.$this->cid.'-'.$_lang);
     }
 }
 

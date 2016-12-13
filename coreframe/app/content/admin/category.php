@@ -21,7 +21,7 @@ class category extends WUZHI_admin {
 	 * 栏目列表
 	 */
 	public function listing() {
-        $types = array('列表','单网页','外链');
+        $types = array('列表','<font color="green">单网页</font>','<font color="#8b0000">外链</font>','隐藏');
         $siteid = get_cookie('siteid');
         $model_cache = get_cache('model_content','model');
         $where = "`keyid`='content' AND `siteid`='$siteid'";
@@ -30,10 +30,15 @@ class category extends WUZHI_admin {
 		foreach($result as $cid=>$r) {
 			$result[$cid]['str_manage'] = '<a class="btn btn-default btn-xs" href="?m=content&f=category&v=add&pid='.$r['cid'].$this->su().'">添加子栏目</a> <a class="btn btn-primary btn-xs" href="?m=content&f=category&v=edit&cid='.$r['cid'].$this->su().'">修改</a> <a class="btn btn-danger btn-xs" href="javascript:makedo(\'?m=content&f=category&v=delete&cid='.$r['cid'].$this->su().'\', \'确认删除该记录？\')">删除</a>';
 			$result[$cid]['ctype'] = $types[$r['type']];
-			$result[$cid]['siteid'] = $sitelist[$r['siteid']]['name'];
+			$result[$cid]['siteid'] = isset($sitelist[$r['siteid']]['name'])? $sitelist[$r['siteid']]['name']:'';
 			$result[$cid]['modelname'] = $model_cache[$r['modelid']]['name'];
-			$result[$cid]['url'] = '<a href="'.$r['url'].'" target="_blank">访问</a>';
+			if(strpos($r['url'],'://')===false) {
+				$result[$cid]['url'] = '<a href="'.$sitelist[$r['siteid']]['url'].ltrim($r['url'],'/').'" target="_blank">访问</a>';
+			} else {
+				$result[$cid]['url'] = '<a href="'.$r['url'].'" target="_blank">访问</a>';
+			}
 		}
+
 		$tree = load_class('tree','core',$result);
 		$tree->icon = array('&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│&nbsp;&nbsp;','&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├─&nbsp;&nbsp;','&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─&nbsp;&nbsp;');
 		//$tree->icon = array('<span class="_tree1"></span>','<span class="_tree2"></span>','<span class="_tree3"></span>');
@@ -56,9 +61,11 @@ class category extends WUZHI_admin {
 	public function add() {
         $type = isset($GLOBALS['type']) ? intval($GLOBALS['type']) : 0;
         $siteid = get_cookie('siteid');
+
 		if(isset($GLOBALS['submit'])) {
 			if(!is_array($GLOBALS['catname'])) MSG(L('catname error'));
             $pinyin = load_class('pinyin');
+			$gids = get_cache('group','member');
 
 			foreach ($GLOBALS['catname'] as $key => $value) {
                 if(trim($value)=='') continue;
@@ -70,7 +77,7 @@ class category extends WUZHI_admin {
 				$formdata['name'] = trim($value);
 				$formdata['type'] = $type;
                 if($GLOBALS['catdir'][$key]) {
-                    $formdata['catdir'] = sql_replace($GLOBALS['catdir'][$key]);
+                    $formdata['catdir'] = trim(sql_replace($GLOBALS['catdir'][$key]));
                 } else {
                     $py = $pinyin->return_py($formdata['name']);
                     $formdata['catdir'] = $py['pinyin'];
@@ -92,6 +99,21 @@ class category extends WUZHI_admin {
                     $this->db->update('category',array('child'=>1),array('cid'=>$formdata['pid']));
                 }
                 $this->db->update('category',array('url'=>$urls['url']),array('cid'=>$cid));
+				//添加上栏目访问权限
+				if($type!=2) {
+					$formdata2 = array();
+					$formdata2['value'] = $cid;
+					foreach($gids as $_gid=>$tmp2) {
+						if($_gid==1) continue;
+						$formdata2['priv'] = 'view';
+						$formdata2['groupid'] = $_gid;
+						$this->db->delete('member_group_priv',$formdata2);
+						$this->db->insert('member_group_priv', $formdata2);
+						$formdata2['priv'] = 'listview';
+						$this->db->delete('member_group_priv',$formdata2);
+						$this->db->insert('member_group_priv', $formdata2);
+					}
+				}
 			}
             //更新缓存
             $category_cache = load_class('category_cache','content');
@@ -132,7 +154,7 @@ class category extends WUZHI_admin {
             $formdata = $GLOBALS['form'];
             $formdata['keyid'] = 'content';
             $formdata['name'] = remove_xss($formdata['name']);
-            $formdata['catdir'] = sql_replace($formdata['catdir']);
+            $formdata['catdir'] = trim(sql_replace($formdata['catdir']));
             $formdata['type'] = $type;
             $formdata['parentdir'] = $this->get_parentdir($cid);
             if($type==2) {
@@ -179,6 +201,13 @@ class category extends WUZHI_admin {
 		if (!$cid) MSG(L('empty category id'));
 		$this->db->delete('category',array('cid'=>$cid));
 		$this->delete_child($cid);
+		//删除前台权限表
+		$gids = get_cache('group','member');
+		foreach($gids as $_gid=>$tmp2) {
+			if($_gid==1) continue;
+			$this->db->delete('member_group_priv',array('groupid'=>$_gid,'value'=>$cid,'priv'=>'view'));
+			$this->db->delete('member_group_priv',array('groupid'=>$_gid,'value'=>$cid,'priv'=>'listview'));
+		}
         //更新缓存
         $category_cache = load_class('category_cache','content');
         $category_cache->cache_all();
@@ -275,14 +304,12 @@ class category extends WUZHI_admin {
             //url
             $urlclass->set_category($r);
             if($r['type']==2) {
-                $tmp['url'] = $r['url'];
+                //$tmp['url'] = $r['url'];
             } else {
                 $urls = $urlclass->listurl(array('cid'=>$cid,'page'=>1));
                 $url = $urls['url'];
                 if($url!=$r['url']) $tmp['url'] = $url;
             }
-
-
             if(!empty($tmp)) {
                 $this->db->update('category',$tmp,array('cid'=>$cid));
                 echo $r['name'].',';
@@ -333,7 +360,7 @@ class category extends WUZHI_admin {
             }
             exit('1');
         } else {
-
+			$siteid = get_cookie('siteid');
             $model_cache = get_cache('model_content','model');
             $where = array('keyid'=>M);
             $result = get_cache('category','content');
@@ -345,6 +372,7 @@ class category extends WUZHI_admin {
 
             $categorys = array();
             foreach ($result as $k=>$v) {
+				if($v['siteid']!=$siteid) continue;
                 $v['cid'] = $k;
                 $v['sitename'] = $sitelist[$v['siteid']]['name'];
                 $v['disabled'] = '';
@@ -397,7 +425,7 @@ class category extends WUZHI_admin {
                 $modelname = $model['name'];
                 foreach($cache_categorys as $cid=>$cate) {
                     if($model['master_table']=='content_share') {
-                        if($models[$cate['modelid']]['master_table']=='content_share' && $cate['type']==0 && $cate['siteid']==$siteid) {
+                        if($models[$cate['modelid']]['master_table']=='content_share'  && $cate['siteid']==$siteid) {
                             $cate['cid'] = $cid;
                             $categorys[$cid] = $cate;
                         }

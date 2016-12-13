@@ -27,4 +27,3 @@ TRUNCATE wz_receipt;
 TRUNCATE wz_search_index;
 TRUNCATE wz_search_result;
 TRUNCATE wz_sms_checkcode;
-

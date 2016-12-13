@@ -72,6 +72,7 @@ class createhtml extends WUZHI_admin {
             if(empty($urls['root'])) {
 
             }
+
             $file_root = $urls['root'];
             $this->html->listing($file_root,$page);
             if($GLOBALS['result_lists']==0) {
@@ -146,16 +147,9 @@ class createhtml extends WUZHI_admin {
             }
 
             //上一页
-            if($key) {
-                $data['previous_page'] = array_slice($result, $key, 1);//上一页
-                $data['next_page'] = array_slice($result, $key-2, 1);//下一页
-                if(empty($data['previous_page'])) {
-                    $data['previous_page'] = $this->db->get_one($master_table,"`cid` = '$cid' AND `id`<'$id' AND `status`=9",'*',0,'id DESC');
-                }
-            } else {
-                $data['previous_page'] = $this->db->get_one($master_table,"`cid`= '$cid' AND `id`>'$id' AND `status`=9",'*',0,'id ASC');
-                $data['next_page'] = $this->db->get_one($master_table,"`cid` = '$cid' AND `id`<'$id' AND `status`=9",'*',0,'id DESC');
-            }
+            $data['previous_page'] = $this->db->get_one($master_table,"`cid`= '$cid' AND `id`>'$id' AND `status`=9",'*',0,'id ASC');
+            //下一页
+            $data['next_page'] = $this->db->get_one($master_table,"`cid` = '$cid' AND `id`<'$id' AND `status`=9",'*',0,'id DESC');
 
             $this->html->show($data,1,1,'',$model_r);
 
@@ -200,7 +194,10 @@ class createhtml extends WUZHI_admin {
         foreach($result as $key=>$rs) {
             if($rs['route']>1) continue;
             $id = $rs['id'];
-            $urls = $this->urlclass->showurl(array('id'=>$id,'cid'=>$cid,'addtime'=>$rs['addtime'],'page'=>1,'route'=>$rs['route'],'productid'=>$rs['productid']));
+			$route_config = array('page'=>1);
+			$route_config = array_merge($route_config,$rs);
+			$urls = $this->urlclass->showurl($route_config);
+
             $this->db->update($master_table,array('url'=>$urls['url']),array('id'=>$id));
 
             $startid = $startid+1;

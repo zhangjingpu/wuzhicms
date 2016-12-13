@@ -15,8 +15,10 @@ defined('IN_WZ') or exit('No direct script access allowed');
 load_class('admin');
 
 final class index extends WUZHI_admin {
+
     function __construct() {
         $this->db = load_class('db');
+        $this->app_update = load_class('app','appupdate');
     }
     function init() {
         $lang = get_cookie('lang') ? get_cookie('lang') : LANG;
@@ -24,12 +26,25 @@ final class index extends WUZHI_admin {
         $_panels = $panels = array();
         $result = $this->db->get_list('menu', 'pid<20 AND display=1', '*', 0, 1000, 0, 'sort ASC', '', 'menuid');
         //限制非超管用户的访问菜单
-        if ($_SESSION['role']!=1) {
-            $admin_private = $this->db->get_list('admin_private', 'chk=1 AND role='.$_SESSION['role'],'*', 0, 1000, 0, '', '', 'id');
-            $admin_private_keys = array_keys($admin_private);
+
+        if(strpos($_SESSION['role'],',1,')===false) {
+            $roles = explode(',',trim($_SESSION['role'],','));
+            $admin_private_keys = array();
+            foreach($roles as $role) {
+
+                $admin_private_tmp = $this->db->get_list('admin_private', 'chk=1 AND role='.$role,'*', 0, 1000, 0, '', '', 'id');
+                if(!empty($admin_private_tmp)) {
+                    foreach($admin_private_tmp as $tmp) {
+                        $admin_private_keys[] = $tmp['id'];
+                    }
+                }
+                //$admin_private = array_merge($admin_private,$admin_private_tmp);
+            }
+            //print_r($admin_private);
+            //$admin_private_keys = array_keys($admin_private);
         }
         foreach($result as $key=>$r) {
-            if($_SESSION['role']!=1 && !in_array($key,$admin_private_keys)) continue;
+            if(strpos($_SESSION['role'],',1,')===false && !in_array($key,$admin_private_keys)) continue;
             if($key<20) {
                 $panels[$key] = $r;
             } else {
@@ -47,6 +62,7 @@ final class index extends WUZHI_admin {
 			$sitelist = array(1=>array(
 				'siteid'=>'1',
 				'name'=>'默认站点',
+				'url'=>WEBURL
 				)
 			);
 		}
@@ -55,12 +71,27 @@ final class index extends WUZHI_admin {
             $siteid = 1;
             set_cookie('siteid',1);
         }
+
+        $siteurl = $sitelist[$siteid]['url'];
         include $this->template('index');
 
     }
 
 
     function listing() {
+		//更新栏目缓存
+		$project_tmp = glob(CACHE_ROOT.'content/*');
+		if(!isset($project_tmp[3])) {
+			$category_cache = load_class('category_cache','content');
+			$category_cache->cache_all();
+		}
+		//更新模版缓存
+    	if(!file_exists(CACHE_ROOT.'templates/default/content/msg.php')) {
+			//更新模版缓存
+			$c_template = load_class('template');
+			$dirs = COREFRAME_ROOT."templates";
+			$c_template->cache_dir_template($dirs);
+		}
         // query db version
         $dbversion = $this->db->version();
         //$total_member
@@ -79,7 +110,7 @@ final class index extends WUZHI_admin {
             $total_number += $tmp;
             $status_number += $tmp2;
         }
-
+        $app = $this->app_update->checkAppUpgrades();
         ob_start();
         include $this->template('listing');
         $content = ob_get_contents();
@@ -108,7 +139,7 @@ final class index extends WUZHI_admin {
             }
             if(strtolower($GLOBALS['checkcode']) != $_SESSION['code']) {
                 $_SESSION['code'] = '';
-                MSG(L('checkcode error'),HTTP_REFERER);
+                MSG(L('checkcode error'),'?m=core&f=index&v=login'.$this->su());
             }
             //验证密码是否正确，后台管理员与前台用户相同，管理员密码可独立设置
 
@@ -118,7 +149,7 @@ final class index extends WUZHI_admin {
             $this->check_login($username,$password);
 
             $_SESSION['uid'] = $_SESSION['role'] = 0;
-            MSG(L('username or password error'));
+            MSG(L('username or password error'),'?m=core&f=index&v=login'.$this->su());
         } else {
             //显示登录界面
 
@@ -134,6 +165,7 @@ final class index extends WUZHI_admin {
         }
 
         set_cookie('username','');
+        set_cookie('uid','');
         set_cookie('wz_name','');
 
         MSG(L('logout_success'), '?m=core&f=index&v=login'.$this->su(0));
@@ -192,11 +224,9 @@ final class index extends WUZHI_admin {
 
 
     private function check_login($username,$password){
-
-
         if(empty($username)) MSG(L('please enter the correct username'));
         if(empty($password)) MSG(L('please enter the correct password'));
-
+        $username = trim($username);
         $r = $this->db->get_one('member',array('username'=>$username));
         if($r['password']) {
             $uid = $r['uid'];
@@ -223,6 +253,7 @@ final class index extends WUZHI_admin {
                 if($login_ok===TRUE) {
                     $_SESSION['uid'] = $uid;
                     $_SESSION['role'] = $rs['role'];
+                    set_cookie('uid',$uid);
                     set_cookie('username',$username);
                     set_cookie('wz_name',$rs['truename']);
                     $_SESSION['ip'] = $ip;

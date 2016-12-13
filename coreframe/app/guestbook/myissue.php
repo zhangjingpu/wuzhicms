@@ -28,12 +28,12 @@ class myissue extends WUZHI_foreground {
     public function ask() {
         $formdata = array();
         $formdata['title'] = isset($GLOBALS['title']) ? remove_xss($GLOBALS['title']) : strcut($GLOBALS['content'],80);
-        $formdata['content'] = $GLOBALS['content'];
+        $formdata['content'] = remove_xss($GLOBALS['content']);
         $formdata['addtime'] = SYS_TIME;
         $formdata['publisher'] = $this->memberinfo['username'];
         $formdata['ip'] = get_ip();
         $this->db->insert('guestbook', $formdata);
-        MSG('您的提问已经提交，我们的专家会尽快给您回复','?m=guestbook&f=myissue&v=listing');
+        MSG('您的提问已经提交，我们的专家会尽快给您回复',$GLOBALS['forward']);
     }
     public function newask() {
         include T('guestbook','newask');

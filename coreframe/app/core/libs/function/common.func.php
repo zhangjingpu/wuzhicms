@@ -10,7 +10,6 @@ defined('IN_WZ') or exit('No direct script access allowed');
  * 核心函数库，该函数全站调用
  */
 
-
 /**
  * 生成随机字符串
  *
@@ -60,7 +59,7 @@ function L($language = 'empty language', $pars = array(), $apps = ''){
 		return $language;
 	} else {
 		$language = $LANG[$language];
-		if ($pars) {
+		if (!empty($pars) && is_array($pars)) {
 			foreach ($pars AS $_k => $_v) {
 				$language = str_replace('{' . $_k . '}', $_v, $language);
 			}
@@ -79,23 +78,31 @@ function L($language = 'empty language', $pars = array(), $apps = ''){
  */
 function T($m = 'content', $template = 'index', $style = 'default'){
 	$mb = false;
-	if (SUPPORT_MOBILE && is_mobile_request()) {
+	if ($_POST['SUPPORT_MOBILE'] && is_mobile_request()) {
 		$tmp = $template;
 		$template = 'mobile/' . $template;
 		$mb = true;
 	}
-
+	if($style=='default' && TPLID!='default') $style = TPLID;
 	$cache_file = CACHE_ROOT . 'templates/' . $style . '/' . $m . '/' . $template . '.php';
 	if (!file_exists($cache_file)) {
 		$tpl_file = 'templates/' . $style . '/' . $m . '/' . $template . '.html';
 		if (file_exists(COREFRAME_ROOT . $tpl_file)) {
 			exit('Please update template cache!');
+		} elseif(file_exists(CACHE_ROOT . 'templates/default/' . $m . '/' . $template . '.php')) {
+			$cache_file = CACHE_ROOT . 'templates/default/' . $m . '/' . $template . '.php';
+			if (AUTO_CACHE_TPL) {
+				$c_template = load_class('template');
+				$c_template->cache_template($m, $template, 'default');
+			}
 		} elseif ($mb) {
 			$cache_file = CACHE_ROOT . 'templates/' . $style . '/' . $m . '/' . $tmp . '.php';
 			if (!file_exists($cache_file)) {
 				$tpl_file = 'templates/' . $style . '/' . $m . '/' . $tmp . '.html';
 				if (file_exists(COREFRAME_ROOT . $tpl_file)) {
 					exit('Please update template cache!');
+				} elseif(file_exists(CACHE_ROOT . 'templates/default/' . $m . '/' . $tmp . '.php')) {
+					$cache_file = CACHE_ROOT . 'templates/default/' . $m . '/' . $tmp . '.php';
 				} else {
 					exit('Template does not exists:' . $tpl_file);
 				}
@@ -110,11 +117,13 @@ function T($m = 'content', $template = 'index', $style = 'default'){
 		$c_template = load_class('template');
 		$c_template->cache_template($m, $template, $style);
 	}
+
 	return $cache_file;
 }
 
 /**
  * 提示信息
+ *
  * @param $msg            提示内容
  * @param string $gotourl 跳转地址
  * @param int $time       等待跳转时间，毫秒 1000=1秒
@@ -122,9 +131,10 @@ function T($m = 'content', $template = 'index', $style = 'default'){
  * @param string $msg3    扩展提示信息
  */
 function MSG($msg, $gotourl = '', $time = 1000, $msg2 = '', $msg3 = ''){
-	if (IS_CLI) {
+	if (IS_CLI || defined('CLI_DISPLAY')) {
 		echo date('H:i:s', SYS_TIME) . ' Msg:' . $msg . "\r\n";
 	} else {
+		if(OPEN_DEBUG) $time = 10000;
 		if (defined('IN_ADMIN')) {
 			include COREFRAME_ROOT . 'app/core/admin/template/msg.tpl.php';
 		} else {
@@ -199,6 +209,8 @@ function pages($num, $current_page, $pagesize = 20, $urlrule = '', $variables = 
 
 	//上一页
 	$pageup = max(($current_page - 1), 1);
+	$output .= '<li title="按住向左方向键 向前翻页"><a href="' . _pageurl($urlrule, 1, $variables) . '">首页</a></li>';
+	$output .= '<li title="总数"><a href="javascript:;">'.$num.'</a></li>';
 	$output .= '<li title="按住向左方向键 向前翻页"><a href="' . _pageurl($urlrule, $pageup, $variables) . '">&lt;</a></li>';
 	//第一页
 	$active = '';
@@ -244,7 +256,7 @@ function pages($num, $current_page, $pagesize = 20, $urlrule = '', $variables = 
 	$output .= '<script>$(this).focus();</script>';
 
 	$output .= '<li title="按住向右方向键 向后翻页"><a href="' . _pageurl($urlrule, $pagedown, $variables) . '">&gt;</a></li>';
-
+	$output .= '<li title="按住向右方向键 向后翻页"><a href="' . _pageurl($urlrule, $maxpage, $variables) . '">末页</a></li>';
 	return $output;
 }
 
@@ -273,6 +285,7 @@ function _pageurl($urlrule, $page, $variables = array()){
 
 /**
  * 完整url链接
+ *
  * @return string
  */
 function URL(){
@@ -301,6 +314,7 @@ function URL(){
 
 /**
  * url query string 参数去重
+ *
  * @param $url url
  * @return 仅返回querystring 去重后的结果
  */
@@ -321,6 +335,7 @@ function url_unique($url){
 
 /**
  * 分配权重
+ *
  * @param array $weight 权重 例如 array('a'=>200,'b'=>300,'c'=>500)
  * @return string key 键名
  */
@@ -342,6 +357,7 @@ function weight_rand($weight = array()){
 
 /**
  * 获取客户端ip
+ *
  * @return string
  */
 function get_ip(){
@@ -384,6 +400,7 @@ function set_cache($filename, $data, $dir = '_cache_'){
 		}
 		$_dirs[$filename . $dir] = 1;
 	}
+
 	$filename = $cache_path . $filename . '.' . CACHE_EXT . '.php';
 	if (is_array($data)) {
 		$data = '<?php' . "\r\n return " . array2string($data) . '?>';
@@ -398,7 +415,7 @@ function set_cache($filename, $data, $dir = '_cache_'){
  * @return mixed|string
  */
 function get_cache($filename, $dir = '_cache_'){
-	$file = get_cache_path($filename, $dir);;
+	$file = get_cache_path($filename, $dir);
 	if (!file_exists($file)) return '';
 	$data = include $file;
 	return $data;
@@ -415,6 +432,25 @@ function get_cache_path($filename, $dir = '_cache_'){
 	return $cache_path;
 }
 
+/**
+ * 循环删除目录下的所有文件
+ * @param string $dir
+ */
+function delete_dirfile($dir)
+{
+	if ( $handle = opendir($dir) ) {
+		while ( false !== ( $item = readdir( $handle ) ) ) {
+			if ( $item != "." && $item != ".." ) {
+				if ( is_dir( "$dir/$item" ) ) {
+					delete_dirfile( "$dir/$item" );
+				} else {
+					unlink( "$dir/$item" );
+				}
+			}
+		}
+		closedir( $handle );
+	}
+}
 /**
  * 检查str是否存在于strs
  *
@@ -540,65 +576,46 @@ function sql_replace($val){
  * @param int $rephtml
  * @return mixed|string
  */
-function strcut($string, $length, $dot = '', $rephtml = 0){
-	$strlen = strlen($string);
-	if ($strlen <= $length) {
-		return $string;
-	}
-	if ($rephtml == 0) {
-		$string = str_replace(array('&nbsp;', '&amp;', '&quot;', '&lt;', '&gt;', '&#039;'), array(' ', '&', '"', '<', '>', "'"), $string);
-	}
-	$strs = '';
-	if (strtolower(CHARSET) == 'utf-8') {
-		$n = $tn = $noc = 0;
-		while ($n < $strlen) {
-			$t = ord($string[$n]);
-			if ($t == 9 || $t == 10 || (32 <= $t && $t <= 126)) {
-				$tn = 1;
-				$n++;
-				$noc++;
-			} elseif (194 <= $t && $t <= 223) {
-				$tn = 2;
-				$n += 2;
-				$noc += 2;
-			} elseif (224 <= $t && $t < 239) {
-				$tn = 3;
-				$n += 3;
-				$noc += 2;
-			} elseif (240 <= $t && $t <= 247) {
-				$tn = 4;
-				$n += 4;
-				$noc += 2;
-			} elseif (248 <= $t && $t <= 251) {
-				$tn = 5;
-				$n += 5;
-				$noc += 2;
-			} elseif ($t == 252 || $t == 253) {
-				$tn = 6;
-				$n += 6;
-				$noc += 2;
-			} else {
-				$n++;
-			}
 
-			if ($noc >= $length) {
-				break;
-			}
+function strcut($str, $width = 0, $end = '...', $rephtml = 0) {
+	if ($width <= 0 || $width >= strlen($str)) {
+		return $str;
+	}
+	$arr = str_split($str);
+	$len = count($arr);
+	$w = 0;
+	$width *= 10;
+
+	// 不同字节编码字符宽度系数
+	$x1 = 11;   // ASCII
+	$x2 = 16;
+	$x3 = 21;
+	$x4 = $x3;
+
+	for ($i = 0; $i < $len; $i++) {
+		if ($w >= $width) {
+			$e = $end;
+			break;
 		}
-		if ($noc > $length) {
-			$n -= $tn;
+		$c = ord($arr[$i]);
+		if ($c <= 127) {
+			$w += $x1;
 		}
-		$strs = substr($string, 0, $n);
-	} else {
-		for ($i = 0; $i < $length; $i++) {
-			$strs .= ord($string[$i]) > 127 ? $string[$i] . $string[++$i] : $string[$i];
+		elseif ($c >= 192 && $c <= 223) { // 2字节头
+			$w += $x2;
+			$i += 1;
+		}
+		elseif ($c >= 224 && $c <= 239) { // 3字节头
+			$w += $x3;
+			$i += 2;
+		}
+		elseif ($c >= 240 && $c <= 247) { // 4字节头
+			$w += $x4;
+			$i += 3;
 		}
 	}
 
-	if ($rephtml == 0) {
-		$strs = str_replace(array('&', '"', '<', '>', "'"), array('&amp;', '&quot;', '&lt;', '&gt;', '&#039;'), $strs);
-	}
-	return $strs . $dot;
+	return implode('', array_slice($arr, 0, $i) ). $e;
 }
 
 /**
@@ -660,7 +677,7 @@ function link_url($array){
  * @param $linkageid
  * @param $id
  */
-function linkage($linkageid, $name, $returnid = 1, $extjs = ''){
+function linkage($linkageid, $name, $returnid = 1, $extjs = '',$values = array(),$level = ''){
 	$id = preg_match("/\[(.*)\]/", $name, $m) ? $m[1] : $name;
 	$config = @get_cache('config_' . $linkageid, 'linkage');
 	if (!$config) {
@@ -671,20 +688,24 @@ function linkage($linkageid, $name, $returnid = 1, $extjs = ''){
 
 	if ($config['display_type'] == 1) {
 		//select 选项框
+		if($values[1]=='') $values[1] = 0;
+		$level = $level=='' ? $config['level'] : $level;
 		$str = '';
 		$str .= '<div id="wz_' . $id . '">';
 		$str .= '<input type="hidden" id="' . $id . '" name="' . $name . '" value="0">';
-		for ($i = 1; $i <= $config['level']; $i++) {
-			$str .= '<div class="col-lg-3 col-sm-4 col-xs-4" style="padding-left: 0;"><select class="LK' . $linkageid . '_' . $i . ' form-control" name="LK' . $linkageid . '_' . $i . '" onchange="linkage(\'' . $id . '\',this.value)" ' . $extjs . '></select></div>';
+		for ($i = 1; $i <= $level; $i++) {
+			if($i==$level) $extjs = '';
+			$str .= '<div class="col-sm-4"><select class="LK' . $linkageid . '_' . $i . ' form-control" name="LK' . $linkageid . '_' . $i . '" id="LK' . $linkageid . '_' . $i . '" onchange="linkage(\'' . $id . '\',this.value,this)" ' . $extjs . ' data-value="'.$values[$i].'"></select></div>';
 		}
 		$str .= '</div>';
 		$str .= '<script src="' . R . 'js/jquery.wuzhicms-select.js"></script>';
 		$str .= "\r\n" . '<script>';
 		$str .= "\r\n" . '$.wuzhicmsSelect.defaults.url = "' . WEBURL . 'index.php?m=linkage&f=json&returnid=' . $returnid . '&linkageid=' . $linkageid . '/wz.json";';
+		//$str .= "\r\n" . '$.wuzhicmsSelect.defaults.url = "/res/js/linkage/' . $linkageid . '.json";';
 		$str .= "\r\n" . '$("#wz_' . $id . '").wuzhicmsSelect({';
 		$str .= "\r\n" . 'selects : [';
-		for ($i = 1; $i <= $config['level']; $i++) {
-			$di = $i == $config['level'] ? '' : ',';
+		for ($i = 1; $i <= $level; $i++) {
+			$di = $i == $level ? '' : ',';
 			$str .= '"LK' . $linkageid . '_' . $i . '"' . $di;
 		}
 		$str .= ']';
@@ -704,7 +725,6 @@ function linkage($linkageid, $name, $returnid = 1, $extjs = ''){
 function get_ext($filename){
 	return strtolower(substr(strrchr($filename, "."), 1));
 }
-
 
 /**
  * html字符串格式化（用于打印显示，替换掉html中的特殊字符）
@@ -728,6 +748,7 @@ function checkcode($code){
 
 /**
  * 自定义路由
+ *
  * @param $id
  * @return string
  */
@@ -776,7 +797,6 @@ function array_iconv($input = 'gbk', $output = 'utf-8', $data = ''){
 
 /**
  * 转换字节数为其他单位
- *
  *
  * @param    string $filesize 字节大小
  * @return    string    返回大小
@@ -847,6 +867,7 @@ function cache_in_db($data, $keyid, $m){
 
 /**
  * 查找数组中是否存在某项，并返回指定的字符串，可用于检查复选，单选等
+ *
  * @param $id
  * @param $ids
  * @param string $returnstr
@@ -856,6 +877,13 @@ function check_in($id, $ids, $returnstr = 'checked'){
 	if (in_array($id, $ids)) return $returnstr;
 }
 
+/**
+ * 获取子栏目
+ *
+ * @param $cid
+ * @param string $categorys
+ * @return string
+ */
 function sub_categorys($cid, $categorys = ''){
 	if (empty($categorys)) {
 		$categorys = get_cache('category', 'content');
@@ -890,6 +918,7 @@ function wzsql($table, $where = '', $type = 1, $order = '', $limit = 10, $start 
 }
 
 /**
+ * 自定义SQL查询
  *
  * @param $sql
  * @return array
@@ -930,7 +959,18 @@ function format_textarea($string){
 	return $string;
 }
 
-function imagecut($imageurl, $width, $height, $flag = 1, $bgcolor = ''){
+/**
+ * 图片裁剪
+ *
+ * @param $imageurl 图片路径
+ * @param $width 宽度
+ * @param $height 高度
+ * @param int $flag 裁剪规则,一般而言,允许截图则用4,不允许截图则用1;  假设要求一个为4:3比例的图像,则:4=如果太长则自动刪除一部分 0=长宽转换成参数指定的 1=按比例缩放,自动判断太长还是太宽,长宽约束在参数指定内 2=以宽为约束缩放 3=以高为约束缩放
+ * @param string $bgcolor 如果不为null,则用这个参数指定的颜色作为背景色,并且图像扩充到指定高宽,该参数应该是一个数组;
+ * @return string 新图片路径
+ */
+function imagecut($imageurl, $width, $height, $flag = 0, $bgcolor = ''){
+
 	if ($imageurl == '') return '';
 	if (strpos($imageurl, ATTACHMENT_URL) === false) return $imageurl;
 	$attach_long = strlen(ATTACHMENT_URL);
@@ -950,6 +990,12 @@ function imagecut($imageurl, $width, $height, $flag = 1, $bgcolor = ''){
 	return ATTACHMENT_URL . $newimage;
 }
 
+/**
+ * 二维码
+ *
+ * @param $str 二维码内容
+ * @return string 显示地址
+ */
 function qrcode($str){
 	$str = urlencode($str);
 	return WEBURL . 'api/qrcode.php?str=' . $str;
@@ -1032,12 +1078,24 @@ function p_htmlspecialchars($string, $flags = null){
 	return $string;
 }
 
+/**
+ * Convert special HTML entities back to characters
+ *
+ * @param $string
+ * @return string
+ */
 function p_html_entity_decode($string){
 	$encoding = 'utf-8';
 	if (strtolower(CHARSET) == 'gbk') $encoding = 'ISO-8859-1';
 	return html_entity_decode($string, ENT_QUOTES, $encoding);
 }
 
+/**
+ * Convert all HTML entities to their applicable characters
+ *
+ * @param $string
+ * @return string
+ */
 function p_htmlentities($string){
 	$encoding = 'utf-8';
 	if (strtolower(CHARSET) == 'gbk') {
@@ -1047,6 +1105,12 @@ function p_htmlentities($string){
 	}
 }
 
+/**
+ * 计算字符串长度
+ *
+ * @param $str
+ * @return int
+ */
 function p_strlen($str){
 	if (strtolower(CHARSET) != 'utf-8') {
 		return strlen($str);
@@ -1063,5 +1127,120 @@ function p_strlen($str){
 	}
 	return $count;
 }
+/**
+ * 获取头像
+ * @param int $uid 用户id
+ * @param $size 30|45|90|180 default 30
+ */
+function avatar($uid, $size=30,$sex = 0){
+	$uid = (int)$uid;
+	if($uid){
+		$size = intval($size);
+		$file = 'uploadfile/member/'.substr(md5($uid), 0, 2).'/'.$uid.'/'.$size.'x'.$size.'.jpg';
+		if(file_exists(WWW_ROOT.$file)){
+			return WEBURL.$file;
+		}
+	}
+	if($sex==1) {
+		return R.'images/icon/man.png';
+	} elseif($sex==2) {
+		return R.'images/icon/girl.png';
+	} else {
+		return R.'images/userface.png';
+	}
+}
 
+/**
+ * 获取栏目链接
+ * @param $cid 栏目ID
+ * @param $m 模块名称
+ */
+function caturl($cid,$m = 'content') {
+	static $categorys;
+    if(empty($categorys[$m])) {
+        $categorys[$m] = get_cache('category',$m);
+    }
+	return $categorys[$m][$cid]['url'];
+}
+/**
+ * 后台快捷管理
+ * @param $url
+ */
+function adminurl($url,$str = '',$extstr = '') {
+	static $_PRI;
+	$uid = get_cookie('_uid');
+	if(!$uid) return '';
+	$url .= '&_lang='.LANGUAGE;
+	$token = md5($url.$uid);
+	$newurl = WEBURL.'index.php?m=member&f=adminurl&token='.$token.'&forward='.urlencode($url);
+	if($str) {
+		parse_str(trim($url,'?'));
+		$keyid = substr(md5($m.$f.$v.$cid.$actionid),0,16);
+		if(!isset($_PRI[$keyid])) {
+			$db = load_class('db');
+			$r = $db->get_one('category_private', array('cid' => $cid,'actionid'=>$actionid));
+			if(!$r) return '';
+		}
+
+		$newurl = str_replace('=""','="'.$newurl.'"',$str);
+		$_PRI[$keyid] = 1;
+		return $newurl;
+	} else {
+		return $newurl;
+	}
+}
+/**
+ * url 组装
+ */
+function filterurl($_type,$_field,$_value) {
+	$filterurl_config = get_config('filterurl_config');
+	$field_array = $filterurl_config[$_type]['field'];
+	$urlrule = $filterurl_config[$_type]['urlrule'];
+	$page = $GLOBALS['page'];
+	$variables = array();
+	foreach($field_array as $field) {
+		if($field=='city') {
+			$variables['city'] = $GLOBALS['city'];
+		} else {
+			$variables[$field] = isset($GLOBALS[$field]) ? intval($GLOBALS[$field]) : 0;
+		}
+	}
+	$variables[$_field] = $_value;
+	//$_GET['variables'] = $variables;
+	return _pageurl($urlrule, $page, $variables);
+}
+
+/**
+ *  中文分词
+ * @param $data
+ * @return array
+ */
+function segment($data) {
+	if(!get_extension_funcs('scws')) return '';
+	if($data=='') return array();
+	$cws = scws_new();
+	$cws->set_charset('utf8');
+	$cws->set_duality(1);
+	$cws->set_ignore(1);
+	$cws->set_multi(1);
+	$cws->send_text($data);
+	$showa = 0;
+	while ($res = $cws->get_result()) {
+		$words = array();
+		foreach ($res as $tmp) {
+			if ($tmp['len'] == 1 && $tmp['word'] == "\r") {
+				continue;
+			}
+			if ($tmp['len'] == 1 && $tmp['word'] == "\n") {
+				$words[] = $tmp['word'];
+			} else if ($showa) {
+				// printf("%s/%s ", $tmp['word'], $tmp['attr']);
+			} else {
+				$words[] = $tmp['word'];
+			}
+		}
+		flush();
+	}
+	return $words;
+}
 ?>
